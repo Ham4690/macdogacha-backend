@@ -1,0 +1,52 @@
+name: Deploy to Sakura VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'stg' }}
+
+    env:
+      SSH_USERNAME: ${{ vars.SSH_USERNAME }}
+      SERVER_HOST: ${{ vars.SERVER_HOST }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY_BASE64 }}" | base64 -d > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
+
+      - name: Build with Gradle
+        run: ./gradlew bootJar
+
+      - name: Package artifact
+        run: |
+          mkdir -p package
+          cp build/libs/*SNAPSHOT.jar package/app.jar 
+          cp src/main/resources/application.yaml package/
+          cp src/main/resources/application-stg.yaml package/
+          cp src/main/resources/application-prod.yaml package/
+          cp Dockerfile package/
+
+      - name: Deploy via rsync
+        run: |
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./package/ $SSH_USERNAME@$SERVER_HOST:$DEPLOY_PATH
+
+      - name: Restart Docker Compose
+        run: |
+          ssh $SSH_USERNAME@$SERVER_HOST << EOF
+            cd $DEPLOY_PATH
+            docker compose down || true
+            docker compose build --build-arg ENV=${{ github.environment }}
+            docker compose up -d
+          EOF
