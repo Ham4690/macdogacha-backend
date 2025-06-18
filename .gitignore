@@ -167,4 +167,7 @@ gradle-app.setting
 # Java heap dump
 *.hprof
 
+### GitHub Actions ###
+.secrets
+
 # End of https://www.toptal.com/developers/gitignore/api/java,gradle,intellij
