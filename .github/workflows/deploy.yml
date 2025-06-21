@@ -48,11 +48,12 @@ jobs:
         run: |
           rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./package/ $SSH_USERNAME@$SERVER_HOST:$DEPLOY_PATH
 
-      - name: Restart Docker Compose
+      - name: Restart Docker Container
         run: |
-          ssh $SSH_USERNAME@$SERVER_HOST << EOF
+          ssh -T $SSH_USERNAME@$SERVER_HOST << EOF
             cd $DEPLOY_PATH
-            docker compose down || true
-            docker compose build --build-arg ENV=${{ github.environment }}
-            docker compose up -d
+            docker stop macdogacha-backend || true
+            docker rm macdogacha-backend || true
+            docker build -t macdogacha-backend --build-arg ENV=${{ github.environment }} .
+            docker run -d --name macdogacha-backend -p 8080:8080 macdogacha-backend
           EOF
