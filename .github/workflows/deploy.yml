@@ -39,9 +39,6 @@ jobs:
         run: |
           mkdir -p package
           cp build/libs/*SNAPSHOT.jar package/app.jar 
-          cp src/main/resources/application.yaml package/
-          cp src/main/resources/application-stg.yaml package/
-          cp src/main/resources/application-prod.yaml package/
           cp Dockerfile package/
 
       - name: Deploy via rsync
@@ -51,9 +48,10 @@ jobs:
       - name: Restart Docker Container
         run: |
           ssh -T $SSH_USERNAME@$SERVER_HOST << EOF
+            set -e
             cd $DEPLOY_PATH
             docker stop macdogacha-backend || true
             docker rm macdogacha-backend || true
-            docker build -t macdogacha-backend --build-arg ENV=${{ github.environment }} .
-            docker run -d --name macdogacha-backend -p 8080:8080 macdogacha-backend
+            docker build -t macdogacha-backend .
+            docker run -d --name macdogacha-backend-${{ github.environment }} -p 8080:8080 -e SPRING_PROFILES_ACTIVE=${{ github.environment }} macdogacha-backend
           EOF
