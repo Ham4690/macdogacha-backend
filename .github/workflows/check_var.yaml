@@ -2,19 +2,37 @@ name: Check GitHub Actions Variables
 
 on:
   workflow_dispatch: # 手動
+    inputs:
+      environment:
+        description: 'Choose environment (e.g. prod or stg)'
+        required: true
+        default: 'prod'
+      hoge:
+        description: 'Hoge variable'
+        required: false
+        default: 'default_value'
 
 jobs:
   show-vars:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
 
     steps:
       - name: Show GitHub Actions Variables
         run: |
-          echo "SSH_USERNAME: ${{ vars.SSH_USERNAME }}"
-          echo "SERVER_HOST: ${{ vars.SERVER_HOST }}"
-          echo "DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}"
-          echo "SSH_PRIVATE_KEY_BASE64: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}"
-          echo "GITHUB_ENV: ${{ github.environment }}"
-          echo "GITHUB_REF: ${{ github.ref }}"
-          echo "GITHUB_SHA: ${{ github.sha }}"
-          echo "GITHUB_WORKFLOW: ${{ github.workflow }}"
+          echo "🔐 secrets.SSH_PRIVATE_KEY_BASE64: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}"
+          echo "🔧 vars.SSH_USERNAME: ${{ vars.SSH_USERNAME }}"
+          echo "🌐 vars.SERVER_HOST: ${{ vars.SERVER_HOST }}"
+          echo "📁 vars.DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}"
+          
+          echo "📦 github.repository: ${{ github.repository }}"
+          echo "👤 github.actor: ${{ github.actor }}"
+          echo "🧪 github.event_name: ${{ github.event_name }}"
+          echo "📛 github.workflow: ${{ github.workflow }}"
+          echo "🌿 github.ref: ${{ github.ref }}"
+          echo "🔢 github.sha: ${{ github.sha }}"
+          echo "🧭 github.environment: ${{ github.environment }}"
+
+          echo "⏰ runner.os: ${{ runner.os }}"
+          echo "🧰 runner.arch: ${{ runner.arch }}"
+          echo "📍 runner.temp: ${{ runner.temp }}"
