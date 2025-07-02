@@ -1,0 +1,20 @@
+name: Check GitHub Actions Variables
+
+on:
+  workflow_dispatch: # 手動
+
+jobs:
+  show-vars:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show GitHub Actions Variables
+        run: |
+          echo "SSH_USERNAME: ${{ vars.SSH_USERNAME }}"
+          echo "SERVER_HOST: ${{ vars.SERVER_HOST }}"
+          echo "DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}"
+          echo "SSH_PRIVATE_KEY_BASE64: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}"
+          echo "GITHUB_ENV: ${{ github.environment }}"
+          echo "GITHUB_REF: ${{ github.ref }}"
+          echo "GITHUB_SHA: ${{ github.sha }}"
+          echo "GITHUB_WORKFLOW: ${{ github.workflow }}"
