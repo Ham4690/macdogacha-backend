@@ -3,7 +3,7 @@ name: Deploy to Sakura VPS
 on:
   push:
     branches:
-      - main
+      - "**"
 
 jobs:
   build:
@@ -47,11 +47,31 @@ jobs:
 
       - name: Restart Docker Container
         run: |
+          ENVIRONMENT=${{ github.environment }}
+          CONTAINER_NAME="macdogacha-backend-$ENVIRONMENT"
+          SHORT_SHA=${GITHUB_SHA::7}
+
+          if [ "$ENVIRONMENT" = "prod" ]; then
+            TAG="prod-$SHORT_SHA"
+            VPS_PORT=8080
+          else
+            TAG="stg-$SHORT_SHA"
+            VPS_PORT=8081
+          fi
+          
+          echo "Deploying to $ENVIRONMENT environment with tag $TAG"
+          
           ssh -T $SSH_USERNAME@$SERVER_HOST << EOF
             set -e
             cd $DEPLOY_PATH
-            docker stop macdogacha-backend || true
-            docker rm macdogacha-backend || true
-            docker build -t macdogacha-backend .
-            docker run -d --name macdogacha-backend-${{ github.environment }} -p 8080:8080 -e SPRING_PROFILES_ACTIVE=${{ github.environment }} macdogacha-backend
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
+          
+            docker build -t macdogacha-backend:$TAG .
+          
+            docker run -d \
+              --name $CONTAINER_NAME \
+              -p $VPS_PORT:8080 \
+              -e SPRING_PROFILES_ACTIVE=$ENVIRONMENT \
+              macdogacha-backend:$TAG
           EOF
